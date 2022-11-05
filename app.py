@@ -1,22 +1,26 @@
-from flask import Flask,render_template,request
+import numpy as np
+from flask import Flask, request, jsonify, render_template
+import pickle
 
-app=Flask(__name__)
+application = Flask(__name__) #Initialize the flask App
+model = pickle.load(open('model.pkl', 'rb'))
 
-@app.route("/something",methods=["GET"])
-def somethingh():
-    return "<h1>Hello world</h1>"
-
-@app.route('/')
+@application.route('/')
 def home():
     return render_template('index.html')
 
-@app.route("/something2")
+@application.route('/predict',methods=['POST'])
 def predict():
-    return "something"
+    '''
+    For rendering results on HTML GUI
+    '''
+    int_features = [int(x) for x in request.form.values()]
+    final_features = [np.array(int_features)]
+    prediction = model.predict(final_features)
 
-@app.route("/predict",methods=["POST"])
-def main():
-    x=[int(x) for x in request.form.values]
+    output = round(prediction[0], 2)
 
-if __name__=="__main__":
-    app.run(debug=True,host="192.168.121.124",port=5000)
+    return render_template('index.html', prediction_text='Employee Salary should be rs {}'.format(output))
+
+if __name__ == "__main__":
+    application.run(debug=True,host="0.0.0.0",port=8000)
